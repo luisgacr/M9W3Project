@@ -1,0 +1,60 @@
+---
+title: "M9-W3-Project"
+author: "Luis Caro"
+date: "July 9, 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Colombia's Exchange Rate (Col Pesos per USD)
+
+```{r,include=FALSE}
+library(plotly)
+library(mongolite)
+library(lubridate)
+
+cleanData=function(originalSeries)
+{
+  cleanSeries<-originalSeries[,c(1,2)]
+  
+  names(cleanSeries)<-c("date","rate")
+
+  dates<-dmy(cleanSeries$date)
+  cleanSeries[,1]<-dates
+  
+  rates<-as.numeric(gsub(",","",sub("\\$ ","",as.character(cleanSeries$rate))))#<------------------------------------------------------sub: elimina el primer "head(tt)
+  cleanSeries[,2]<-rates
+  
+  cleanSeries
+}
+  
+
+options(mongodb = list(
+  "host" = "ds137882.mlab.com:37882",
+  "username" = "luisgacr",
+  "password" = "finac123"
+))
+
+databaseName <- "finacpredict"
+
+urlml = sprintf(
+  "mongodb://%s:%s@%s/%s",
+  options()$mongodb$username,
+  options()$mongodb$password,
+  options()$mongodb$host,
+  databaseName)
+
+
+TRMs <- mongo( collection = "TRMs", url = urlml)
+
+originalSeries<-cleanData( TRMs$find() )
+
+```
+
+```{r}
+plot_ly(originalSeries, x = ~date, y = ~rate,type="scatter", mode="markers")
+```
+
